@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ToDo
 
-## Getting Started
+Opsæt projektet
 
-First, run the development server:
+- Lav en simpel layoutstruktur med en navbar og sider
+- bruger app router og src
+- hvordan skal siden se ud i forhold til ai dopamin
+- den skal kunne
+- kan altid gøre det vildere den skal starte blidt ud
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Brugerlogin & Authentication
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+    Implementér Firebase Auth (Google-login for nem MVP)
+    Opret en simpel dashboard-side, der kun er tilgængelig for loggede brugere
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Fase 2: Zwift-integration & Dashboard
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+    Lav en simpel side, der viser statiske træningsdata (distance, watt, tid)
+    Tilføj grafkomponenter (f.eks. recharts eller chart.js)
 
-## Learn More
+Forbind til Zwift/Strava API
 
-To learn more about Next.js, take a look at the following resources:
+    Undersøg Zwifts API og få adgang til brugerens data
+    Lav en API-route i backend til at hente og gemme Zwift-data
+    Vis rigtige træningsdata på dashboardet
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Fase 3: AI-integration & Motivation
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Opsæt Ollama & DeepSeek-R1:8B
 
-## Deploy on Vercel
+    Lav en backend-service, der sender brugerens træningsdata til AI’en
+    AI’en skal svare med motiverende beskeder baseret på præstation
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Byg AI-chatbot UI
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+    Simpel chat-komponent, hvor brugeren kan stille spørgsmål om sin træning
+    Implementér en prompt-engineering-strategi, så AI’en svarer relevant
+
+Automatiske beskeder & daglige mål
+
+    Lav en funktion, der sender daglige påmindelser/motivation
+    Brug en cron-job eller Firebase Functions til daglige notifikationer
+
+Fase 4: Finpudsning & Udvidelse
+
+Forbedret tracking & mål
+
+    Giv brugeren mulighed for at sætte personlige mål
+    Track overholdelse af målene og vis statistik
+
+Gamification & UX-forbedringer
+
+    Tilføj belønninger/badges for gennemført træning
+    Optimér UI/UX for en bedre brugeroplevelse

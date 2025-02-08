@@ -1,12 +1,22 @@
+# Del 1
+
+- Lav en hjemmeside der hente data fra strava api og viser kronologisk aktiviteter.
+- den skal gemme data
+
+Strava API v3 documentation:
+https://developers.strava.com/docs/reference/
+
 # ToDo
+
+- Find ud af hvad det kræver og hente gemme data fra strava api
+- Lav et UI på hjemmesiden som kan vise aktiviteter
+
+# Del 2
 
 Opsæt projektet
 
 - Lav en simpel layoutstruktur med en navbar og sider
 - bruger app router og src
-- hvordan skal siden se ud i forhold til ai dopamin
-- den skal kunne
-- kan altid gøre det vildere den skal starte blidt ud
 
 Brugerlogin & Authentication
 

@@ -1,101 +1,209 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+import { useEffect, useState, useMemo, useCallback } from "react";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import Spinner from "@/components/ui/Spinner";
+import {
+  Activity as ActivityIcon,
+  Heart,
+  LogOut,
+  Ruler,
+  Timer,
+  TrendingUp,
+  Users,
+  Bike,
+} from "lucide-react";
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+type Activity = {
+  id: number;
+  name: string;
+  start_date: string;
+  distance: number;
+  moving_time: number;
+  average_cadence: number;
+  average_heartrate: number;
+  average_watts: number;
+  elev_high: number;
+  elev_low: number;
+  kudos_count: number;
+};
+
+const StravaActivity = () => {
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // Use useCallback to memoize the fetchActivities function
+  const fetchActivities = useCallback(
+    async (token: string) => {
+      setLoading(true);
+      try {
+        const res = await fetch(
+          "https://www.strava.com/api/v3/athlete/activities",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        if (!res.ok) {
+          throw new Error("Kunne ikke hente aktiviteter");
+        }
+
+        const data: Activity[] = await res.json();
+        setActivities(data);
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Fejl ved hentning af aktiviteter",
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    [], // Dependencies are empty as this function doesn't depend on any state
+  );
+
+  useEffect(() => {
+    const token = localStorage.getItem("stravaAccessToken");
+    if (token) {
+      setIsAuthenticated(true);
+      fetchActivities(token);
+    }
+  }, [fetchActivities]); // Add fetchActivities to the dependency array
+
+  const handleStravaAuth = () => {
+    const clientId = process.env.NEXT_PUBLIC_STRAVA_CLIENT_ID;
+    const redirectUri = encodeURIComponent("http://localhost:3000/callback");
+    const scope = "activity:read_all";
+
+    const authUrl = `https://www.strava.com/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}`;
+    window.location.href = authUrl;
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("stravaAccessToken");
+    setIsAuthenticated(false);
+    setActivities([]);
+  };
+
+  const ActivityCard = ({ activity }: { activity: Activity }) => (
+    <Card className="overflow-hidden w-full max-w-3xl mx-auto mb-6">
+      <CardHeader className="bg-gradient-to-r from-orange-500 to-orange-600">
+        <CardTitle className="text-white">{activity.name}</CardTitle>
+        <p className="text-orange-100 text-2xl font-semibold">
+          {new Date(activity.start_date).toLocaleDateString("da-DK")}
+        </p>
+      </CardHeader>
+      <CardContent className="pt-6">
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            {[
+              {
+                icon: <Ruler className="w-4 h-4 text-black" />,
+                label: "Distance",
+                value: `${(activity.distance / 1000).toFixed(2)} km`,
+              },
+              {
+                icon: <Timer className="w-4 h-4 text-black" />,
+                label: "Tid",
+                value: `${Math.round(activity.moving_time / 60)} min`,
+              },
+              {
+                icon: <Heart className="w-4 h-4 text-black" />,
+                label: "Puls",
+                value: `${activity.average_heartrate} bpm`,
+              },
+              {
+                icon: <Bike className="w-4 h-4 text-black" />,
+                label: "Watt",
+                value: `${activity.average_watts.toFixed(1)} W`,
+              },
+            ].map(({ icon, label, value }) => (
+              <div className="flex items-center gap-2" key={label}>
+                {icon}
+                <div>
+                  <p className="text-sm text-black">{label}</p>
+                  <p className="font-medium text-black">{value}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="pt-4 border-t">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-gray-500" />
+              <div className="flex gap-2 text-sm text-gray-600">
+                <span>↑ {activity.elev_high}m</span>
+                <span>↓ {activity.elev_low}m</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 mt-2">
+              <Users className="w-4 h-4 text-gray-500" />
+              <span className="text-sm text-gray-600">
+                {activity.kudos_count} kudos
+              </span>
+            </div>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </CardContent>
+    </Card>
+  );
+
+  return (
+    <div className="p-6 max-w-7xl mx-auto">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Strava Aktiviteter</h1>
+        {isAuthenticated && (
+          <Button
+            variant="destructive"
+            onClick={handleLogout}
+            className="flex items-center gap-2"
+          >
+            <LogOut className="w-4 h-4" />
+            Log ud
+          </Button>
+        )}
+      </div>
+
+      {!isAuthenticated ? (
+        <Card>
+          <CardContent className="flex flex-col items-center py-12">
+            <ActivityIcon className="w-16 h-16 text-orange-500 mb-4" />
+            <Button
+              onClick={handleStravaAuth}
+              className="bg-orange-500 hover:bg-orange-600"
+            >
+              Forbind med Strava
+            </Button>
+          </CardContent>
+        </Card>
+      ) : loading ? (
+        <Spinner />
+      ) : activities.length > 0 ? (
+        <div>
+          {activities.map((activity) => (
+            <ActivityCard key={activity.id} activity={activity} />
+          ))}
+        </div>
+      ) : (
+        <Card>
+          <CardContent className="py-8 text-center text-gray-500">
+            Ingen aktiviteter fundet
+          </CardContent>
+        </Card>
+      )}
+
+      {error && (
+        <div className="mt-6 p-4 bg-red-50 text-red-600 rounded-lg">
+          {error}
+        </div>
+      )}
     </div>
   );
-}
+};
+
+export default StravaActivity;

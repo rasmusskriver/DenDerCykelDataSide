@@ -90,7 +90,7 @@ const StravaActivity = () => {
   const handleStravaAuth = () => {
     const clientId = process.env.NEXT_PUBLIC_STRAVA_CLIENT_ID;
     const redirectUri = encodeURIComponent(
-      "http://192.168.0.207:3000/callback",
+      "https://den-der-cykel-data-side.vercel.app/callback",
     );
     const scope = "activity:read_all";
 

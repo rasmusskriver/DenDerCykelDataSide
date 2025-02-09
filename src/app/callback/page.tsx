@@ -1,9 +1,8 @@
-// src/app/callback/page.tsx
 "use client";
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function CallbackPage() {
+function CallbackPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -24,9 +23,9 @@ export default function CallbackPage() {
           if (data.error) {
             console.error("Auth error:", data.error);
           } else {
-            // Gem tokens sikkert (i production bør dette håndteres anderledes)
+            // Store tokens securely (this should be handled differently in production)
             localStorage.setItem("stravaAccessToken", data.access_token);
-            router.push("/");
+            router.push("/"); // Redirect to home page after success
           }
         })
         .catch((error) => {
@@ -35,5 +34,13 @@ export default function CallbackPage() {
     }
   }, [searchParams, router]);
 
-  return <div>Behandler Strava authorization...</div>;
+  return <div>Processing Strava authorization...</div>;
+}
+
+export default function CallbackPage() {
+  return (
+    <Suspense fallback={<div>Loading authorization...</div>}>
+      <CallbackPageContent />
+    </Suspense>
+  );
 }

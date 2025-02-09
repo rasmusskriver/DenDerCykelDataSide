@@ -1,3 +1,4 @@
+// src/app/callback/page.tsx
 "use client";
 import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -35,13 +36,4 @@ export default function CallbackPage() {
   }, [searchParams, router]);
 
   return <div>Behandler Strava authorization...</div>;
-}
-
-// Indpakning i Suspense
-export function Page() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <CallbackPage />
-    </Suspense>
-  );
 }

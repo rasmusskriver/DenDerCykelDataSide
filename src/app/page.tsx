@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import dynamic from "next/dynamic";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Spinner from "@/components/ui/Spinner";
@@ -11,33 +12,15 @@ import {
   Ruler,
   Timer,
   TrendingUp,
+  Zap,
+  Gauge,
   Users,
   Bike,
   Map as MapIcon,
 } from "lucide-react";
-import { MapContainer, TileLayer, Polyline } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
-
-// Sikrer at ikoner vises korrekt
-// delete L.Icon.Default.prototype._getIconUrl;
-// L.Icon.Default.mergeOptions({
-//   iconRetinaUrl: require("leaflet/dist/images/marker-icon-2x.png"),
-//   iconUrl: require("leaflet/dist/images/marker-icon.png"),
-//   shadowUrl: require("leaflet/dist/images/marker-shadow.png"),
-// });
-
-type PhotosSummary_primary = {
-  id: number;
-  source: number;
-  unique_id: string;
-  urls: {
-    small?: string;
-    medium?: string;
-    large?: string;
-    original?: string;
-  };
-};
+const ActivityMap = dynamic(() => import("@/components/ui/ActivityMap"), {
+  ssr: false,
+});
 
 type Activity = {
   id: number;
@@ -47,6 +30,10 @@ type Activity = {
   moving_time: number;
   average_cadence: number;
   average_heartrate: number;
+  average_speed: number;
+  max_speed: number;
+  kilojoules: number;
+  max_heartrate: number;
   average_watts?: number | null;
   elev_high: number;
   elev_low: number;
@@ -56,7 +43,6 @@ type Activity = {
   map: {
     summary_polyline: string;
   };
-  photos?: PhotosSummary_primary[];
 };
 
 const StravaActivity = () => {
@@ -103,7 +89,9 @@ const StravaActivity = () => {
 
   const handleStravaAuth = () => {
     const clientId = process.env.NEXT_PUBLIC_STRAVA_CLIENT_ID;
-    const redirectUri = encodeURIComponent("http://localhost:3000/callback");
+    const redirectUri = encodeURIComponent(
+      "http://192.168.0.207:3000/callback",
+    );
     const scope = "activity:read_all";
 
     const authUrl = `https://www.strava.com/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}`;
@@ -116,85 +104,10 @@ const StravaActivity = () => {
     setActivities([]);
   };
 
-  const ActivityMap = ({ polyline }: { polyline: string }) => {
-    const decodePolyline = (polyline: string) => {
-      const coordinates: [number, number][] = [];
-      let index = 0,
-        len = polyline.length;
-      let lat = 0,
-        lng = 0;
-
-      while (index < len) {
-        let b,
-          shift = 0,
-          result = 0;
-        do {
-          b = polyline.charCodeAt(index++) - 63;
-          result |= (b & 0x1f) << shift;
-          shift += 5;
-        } while (b >= 0x20);
-        const dlat = (result >> 1) ^ -(result & 1);
-        lat += dlat;
-
-        shift = 0;
-        result = 0;
-        do {
-          b = polyline.charCodeAt(index++) - 63;
-          result |= (b & 0x1f) << shift;
-          shift += 5;
-        } while (b >= 0x20);
-        const dlng = (result >> 1) ^ -(result & 1);
-        lng += dlng;
-
-        coordinates.push([lat / 1e5, lng / 1e5]);
-      }
-      return coordinates;
-    };
-
-    const coordinates = decodePolyline(polyline);
-
-    if (!coordinates || coordinates.length === 0) {
-      return <p>Ingen kortdata tilgængelig</p>;
-    }
-
-    const center = coordinates[0];
-
-    return (
-      <MapContainer
-        center={center}
-        zoom={13}
-        style={{ height: "400px", width: "100%" }}
-      >
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        />
-        <Polyline positions={coordinates} color="blue" />
-      </MapContainer>
-    );
-  };
-
   const ActivityCard = ({ activity }: { activity: Activity }) => {
-    // Find det første billede, hvis der er nogen
-    const photoUrl =
-      activity.photos && activity.photos.length > 0
-        ? activity.photos[0].urls.medium ||
-          activity.photos[0].urls.small ||
-          activity.photos[0].urls.original ||
-          ""
-        : "";
-
     return (
-      <Card className="overflow-hidden w-full max-w-3xl mx-auto mb-6">
+      <Card className="overflow-hidden w-full max-w-5xl mx-auto mb-6">
         <CardHeader className="bg-gradient-to-r from-orange-500 to-orange-600 p-0">
-          {/* Billede øverst */}
-          {photoUrl && (
-            <img
-              src={photoUrl}
-              alt={`Photo from ${activity.name}`}
-              className="w-full h-48 object-cover"
-            />
-          )}
           <div className="p-4">
             <CardTitle className="text-white">{activity.name}</CardTitle>
             <p className="text-orange-100 text-2xl font-semibold">
@@ -227,6 +140,18 @@ const StravaActivity = () => {
                   value: `${activity.average_watts?.toFixed(1) || 0} W / ${
                     activity.max_watts?.toFixed(1) || 0
                   } W Max`,
+                },
+                {
+                  icon: <Zap className="w-4 h-4 text-black" />, // Lyn-ikon til energi
+                  label: "Forbrændte kalorier",
+                  value: `${activity.kilojoules} kcal`,
+                },
+                {
+                  icon: <Gauge className="w-4 h-4 text-black" />,
+                  label: "Hastighed",
+                  value: `${((activity?.average_speed ?? 0) * 3.6).toFixed(1)} km/t / ${(
+                    (activity?.max_speed ?? 0) * 3.6
+                  ).toFixed(1)} km/t Max`,
                 },
               ].map(({ icon, label, value }) => (
                 <div className="flex items-center gap-2" key={label}>
@@ -266,7 +191,6 @@ const StravaActivity = () => {
                 Ingen kortdata tilgængelig
               </div>
             )}
-            {/* Fjern billeder herfra, da det nu vises i toppen */}
           </div>
         </CardContent>
       </Card>

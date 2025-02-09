@@ -27,10 +27,6 @@ export const CardHeader = ({
   return <div className={`p-4 ${className}`}>{children}</div>;
 };
 
-// export const CardTitle = ({ children }: { children: React.ReactNode }) => {
-//   return <h3 className="text-xl font-semibold text-gray-800">{children}</h3>;
-// };
-
 export const CardContent = ({
   children,
   className,

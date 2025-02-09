@@ -9,7 +9,9 @@ https://developers.strava.com/docs/reference/
 # ToDo
 
 - Find ud af hvad det kræver og hente gemme data fra strava api
-- Lav et UI på hjemmesiden som kan vise aktiviteter
+- Finde ud af hvilke oplysning jeg gerne vil kunne se om en aktivitet.
+- Hvad data mangler jeg i strava app ? kan jeg tilføje premium features til min egen ?
+- Tilføje billeder til siden ?
 
 # Del 2
 
